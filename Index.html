@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spoons Deluxe v12</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --felt:#175f43;
+    --felt-dark:#0f4330;
+    --rail:#315e5d;
+    --rail-dark:#1c3438;
+    --gold:#f4d35e;
+    --purple:#7b54d8;
+    --sky:#72c2dd;
+  }
+  body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    color:white;
+    min-height:100vh;
+    overflow-x:hidden;
+    background:linear-gradient(180deg,var(--purple),#7d83d9 42%,var(--sky));
+  }
+  button,select,input{
+    font-size:16px;
+    border:0;
+    border-radius:10px;
+    padding:10px 14px;
+    margin:5px;
+  }
+  button{
+    cursor:pointer;
+    background:var(--gold);
+    color:#111;
+    font-weight:bold;
+    box-shadow:0 4px 0 #9c7d1d;
+  }
+  button:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+  .screen{display:none;width:100%;min-height:100vh;padding:18px}
+  .active{display:block}
+  #setup{
+    max-width:680px;
+    margin:0 auto;
+    text-align:center;
+    padding-top:50px;
+  }
+  .setupCard{
+    background:rgba(8,36,30,.88);
+    border:8px solid rgba(255,255,255,.12);
+    border-radius:26px;
+    padding:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  .small{font-size:13px;opacity:.9}
+  h1,h2,h3{margin:10px 0}
+
+  /* TABLE */
+  #game{
+    padding:18px;
+  }
+  .gameWrap{
+    max-width:1500px;
+    margin:0 auto;
+  }
+  .topHud{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .hudPill{
+    background:rgba(10,35,35,.75);
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;
+    padding:9px 14px;
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+  }
+  #table{
+    position:relative;
+    width:min(94vw,1420px);
+    height:min(78vh,760px);
+    min-height:650px;
+    margin:0 auto;
+    border-radius:30px;
+    background:
+      radial-gradient(ellipse at center,rgba(255,255,255,.055),transparent 46%),
+      radial-gradient(ellipse at center,rgba(26,122,86,.75),rgba(14,65,47,.95) 72%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,.012) 0px,
+        rgba(255,255,255,.012) 2px,
+        transparent 2px,
+        transparent 4px
+      ),
+      linear-gradient(145deg,#1b704f,var(--felt-dark));
+    border:12px solid var(--rail);
+    box-shadow:
+      inset 0 0 0 3px rgba(255,255,255,.13),
+      inset 0 0 85px rgba(0,0,0,.30),
+      0 16px 40px rgba(0,0,0,.33);
+    overflow:hidden;
+  }
+  #table:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:14px;
+    border:4px solid rgba(0,0,0,.22);
+    pointer-events:none;
+  }
+  .centerSpoons{
+    position:absolute;
+    left:50%;
+    top:48%;
+    transform:translate(-50%,-50%);
+    width:250px;
+    height:185px;
+    z-index:2;
+  }
+  .spoon{
+    position:absolute;
+    display:inline-block;
+    font-size:56px;
+    filter:drop-shadow(0 5px 4px rgba(0,0,0,.5));
+    transform:rotate(28deg);
+  }
+  .spoon:nth-child(1){left:96px;top:0}
+  .spoon:nth-child(2){left:8px;top:58px;transform:rotate(-18deg)}
+  .spoon:nth-child(3){right:8px;top:58px;transform:rotate(42deg)}
+  .spoon:nth-child(4){left:96px;bottom:0;transform:rotate(185deg)}
+  .spoon:nth-child(5){left:48px;top:28px;transform:rotate(115deg)}
+  .spoon:nth-child(6){right:48px;bottom:28px;transform:rotate(-70deg)}
+  .spoon:nth-child(7){left:96px;top:58px;transform:rotate(75deg)}
+  .spoon.gone{
+    animation:spoonSlide .28s ease-out forwards;
+  }
+  @keyframes spoonSlide{
+    0%{opacity:1;transform:translateY(0) rotate(28deg) scale(1)}
+    100%{opacity:0;transform:translateY(54px) rotate(48deg) scale(.72)}
+  }
+
+  /* PLAYERS */
+  .seat{
+    position:absolute;
+    width:220px;
+    height:142px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:3;
+    transform-origin:center center;
+  }
+  .seat.bottom{
+    left:50%;
+    bottom:14px;
+    transform:translateX(-50%);
+    width:650px;
+    height:205px;
+  }
+  .seat.top{left:50%;top:18px;transform:translateX(-50%)}
+  .seat.left{left:64px;top:50%;transform:translateY(-50%)}
+  .seat.right{right:64px;top:50%;transform:translateY(-50%)}
+  .seat.topLeft{left:210px;top:120px;transform:rotate(-16deg)}
+  .seat.topRight{right:210px;top:120px;transform:rotate(16deg)}
+  .seat.bottomLeft{left:220px;bottom:135px;transform:rotate(10deg)}
+  .seat.bottomRight{right:220px;bottom:135px;transform:rotate(-10deg)}
+  .nameTag{
+    font-weight:900;
+    letter-spacing:.5px;
+    text-shadow:0 2px 3px rgba(0,0,0,.6);
+    font-size:14px;
+    margin-bottom:4px;
+    text-transform:uppercase;
+  }
+  .spoonBadge{
+    display:inline-block;
+    margin-left:4px;
+    font-size:18px;
+  }
+  .avatar{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:3px solid white;
+    background:linear-gradient(145deg,#fff,#d6d6ff);
+    color:#1b6045;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:23px;
+    box-shadow:0 4px 10px rgba(0,0,0,.3);
+    margin:2px;
+  }
+  .letters{
+    white-space:nowrap;
+  }
+  .letter{
+    display:inline-block;
+    background:rgba(0,0,0,.25);
+    border-radius:6px;
+    padding:2px 5px;
+    margin:1px;
+    font-size:11px;
+  }
+  .out{
+    opacity:.45;
+    filter:grayscale(1);
+  }
+
+  /* CARDS */
+  .handRow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0;
+  }
+  .seat:not(.bottom) .handRow{
+    width:180px;
+    height:88px;
+    margin-top:4px;
+    position:relative;
+  }
+  .card{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:62px;
+    height:86px;
+    border-radius:8px;
+    background:#fff;
+    color:#111;
+    font-weight:900;
+    border:2px solid #e9e9e9;
+    box-shadow:0 5px 10px rgba(0,0,0,.35);
+    cursor:pointer;
+    user-select:none;
+    font-size:22px;
+  }
+  .bottom .card{
+    width:78px;
+    height:108px;
+    font-size:28px;
+    margin-left:-2px;
+  }
+  .bottom .handRow{
+    align-items:flex-start;
+    overflow:visible;
+  }
+  .bottom .card:first-child{margin-left:0}
+  .humanCard{
+    transition:transform .12s ease, box-shadow .12s ease, outline-color .12s ease;
+  }
+  .humanCard:hover,
+  .humanCard:focus-visible{
+    transform:translateY(-7px);
+    box-shadow:0 10px 18px rgba(0,0,0,.42);
+    outline:3px solid rgba(244,211,94,.95);
+    outline-offset:2px;
+  }
+  .humanCard.hot{
+    box-shadow:
+      0 0 0 3px rgba(244,211,94,.72),
+      0 8px 18px rgba(0,0,0,.4);
+  }
+  .incomingSlot .card{
+    animation:dealPop .18s ease-out;
+  }
+  @keyframes dealPop{
+    from{transform:scale(.88);opacity:.7}
+    to{transform:scale(1);opacity:1}
+  }
+  .red{color:#c12a20}
+  .black{color:#111}
+  .cardBack{
+    width:54px;
+    height:76px;
+    border-radius:7px;
+    border:2px solid #fff;
+    background:
+      repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 3px,transparent 3px 6px),
+      linear-gradient(145deg,#6d64db,#b9b4ff);
+    box-shadow:0 5px 10px rgba(0,0,0,.35);
+  }
+  .fan .cardBack{
+    position:absolute;
+    left:62px;
+    top:8px;
+    margin:0;
+  }
+  .fan .cardBack:nth-child(2){transform:translateX(-45px) rotate(-18deg)}
+  .fan .cardBack:nth-child(3){transform:translateX(-15px) translateY(-5px) rotate(-6deg)}
+  .fan .cardBack:nth-child(4){transform:translateX(15px) translateY(-5px) rotate(6deg)}
+  .fan .cardBack:nth-child(5){transform:translateX(45px) rotate(18deg)}
+  .seat.left .fan .cardBack:nth-child(2){transform:translateX(-42px) rotate(-10deg)}
+  .seat.left .fan .cardBack:nth-child(3){transform:translateX(-14px) translateY(-3px) rotate(-3deg)}
+  .seat.left .fan .cardBack:nth-child(4){transform:translateX(14px) translateY(-3px) rotate(3deg)}
+  .seat.left .fan .cardBack:nth-child(5){transform:translateX(42px) rotate(10deg)}
+  .seat.right .fan .cardBack:nth-child(2){transform:translateX(-42px) rotate(-10deg)}
+  .seat.right .fan .cardBack:nth-child(3){transform:translateX(-14px) translateY(-3px) rotate(-3deg)}
+  .seat.right .fan .cardBack:nth-child(4){transform:translateX(14px) translateY(-3px) rotate(3deg)}
+  .seat.right .fan .cardBack:nth-child(5){transform:translateX(42px) rotate(10deg)}
+
+  .incomingSlot{
+    width:44px;
+    height:62px;
+    border:2px dashed rgba(255,255,255,.35);
+    border-radius:8px;
+    margin-right:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.045);
+  }
+  .seat:not(.bottom) .incomingSlot{
+    position:absolute;
+    left:0;
+    top:13px;
+  }
+  .bottom .incomingSlot{
+    width:78px;
+    height:108px;
+    margin:0;
+    order:0;
+  }
+  .incomingColumn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    margin-left:42px;
+    width:130px;
+  }
+  .incomingColumn .incomingSlot{
+    margin:0 auto;
+  }
+  .incomingColumn button{
+    margin-top:8px;
+    width:120px;
+    height:52px;
+    font-size:20px;
+  }
+  .playerControls{
+    margin-top:-55px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  .meter{
+    height:12px;
+    width:90px;
+    background:rgba(255,255,255,.24);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .meterFill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#62e6a6,#f4d35e,#ff6961);
+    transition:width .1s linear;
+  }
+  .deckPile{
+    position:absolute;
+    left:67%;
+    bottom:36px;
+    width:82px;
+    height:110px;
+    z-index:2;
+  }
+  .deckPile .cardBack{
+    position:absolute;
+    margin:0;
+    width:72px;
+    height:100px;
+  }
+  .deckPile .cardBack:nth-child(1){left:0;top:6px}
+  .deckPile .cardBack:nth-child(2){left:4px;top:3px}
+  .deckPile .cardBack:nth-child(3){left:8px;top:0}
+  .statusFloat{
+    position:absolute;
+    top:16px;
+    left:18px;
+    background:rgba(0,0,0,.22);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:999px;
+    padding:8px 13px;
+    font-size:14px;
+    z-index:5;
+    max-width:38%;
+  }
+  .statsPanel{
+    width:min(92vw,1420px);
+    margin:12px auto 0;
+    background:rgba(10,35,35,.78);
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:16px;
+    padding:12px;
+    text-align:center;
+  }
+  .statTable{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+  }
+  .statTable th,.statTable td{
+    border-bottom:1px solid rgba(255,255,255,.18);
+    padding:7px;
+  }
+
+  .cardMover{
+    position:absolute;
+    width:54px;
+    height:76px;
+    border-radius:7px;
+    border:2px solid #fff;
+    background:
+      repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 3px,transparent 3px 6px),
+      linear-gradient(145deg,#6d64db,#b9b4ff);
+    box-shadow:0 6px 12px rgba(0,0,0,.38);
+    z-index:9;
+    pointer-events:none;
+    animation:moveCard .26s ease-out forwards;
+  }
+  @keyframes moveCard{
+    from{opacity:1;transform:translate(var(--fromX),var(--fromY)) scale(1)}
+    to{opacity:0;transform:translate(var(--toX),var(--toY)) scale(.78)}
+  }
+
+  @media(max-width:900px){
+    #table{height:700px}
+    .seat{transform:none!important}
+    .seat.left{left:8px;top:42%}
+    .seat.right{right:8px;top:42%}
+    .seat.topLeft,.seat.topRight,.seat.bottomLeft,.seat.bottomRight{display:none}
+    .centerSpoons{gap:22px}
+    .spoon{font-size:44px}
+    .seat.bottom{width:95%;bottom:14px}
+  }
+
+.bottom .card{
+position:relative;
+}
+.bottom .card:hover{
+z-index:180;
+}
+.avatar.flash{
+animation:goldFlash .6s ease;
+}
+@keyframes goldFlash{
+0%{box-shadow:0 0 0 rgba(255,215,0,0)}
+50%{box-shadow:0 0 25px gold}
+100%{box-shadow:0 0 0 rgba(255,215,0,0)}
+}
+.avatar.missed{
+animation:redPulse 1s infinite;
+}
+@keyframes redPulse{
+0%{box-shadow:0 0 0 rgba(255,0,0,0)}
+50%{box-shadow:0 0 22px red}
+100%{box-shadow:0 0 0 rgba(255,0,0,0)}
+}
+.floatReaction{
+position:absolute;
+color:#fff;
+font-weight:bold;
+animation:floatUp 2s ease forwards;
+pointer-events:none;
+z-index:999;
+}
+@keyframes floatUp{
+from{opacity:1;transform:translateY(0)}
+to{opacity:0;transform:translateY(-40px)}
+}
+
+
+.incomingSlot{
+  box-shadow:0 0 14px rgba(255,255,255,.18);
+}
+.incomingSlot .card{
+  box-shadow:
+    0 0 18px rgba(255,255,180,.45),
+    0 5px 12px rgba(0,0,0,.35);
+}
+.avatar{
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.avatar:hover{
+  transform:scale(1.08);
+}
+.spoon{
+  filter:
+    drop-shadow(0 5px 4px rgba(0,0,0,.5))
+    brightness(1.08);
+}
+.cardMover{
+  animation:moveCard .45s ease-out forwards !important;
+}
+
+
+.personalityTag{
+  font-size:10px;
+}
+.personality-Hawk{background:#d97706;}
+.personality-Shark{background:#b91c1c;}
+.personality-Ace{background:#2563eb;}
+.personality-Bluff{background:#7c3aed;}
+.personality-Lucky{background:#16a34a;}
+.personality-Flash{background:#ca8a04;}
+.personality-Dealer{background:#6b7280;}
+.personalityTag{
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  opacity:.85;
+  background:rgba(0,0,0,.22);
+  border-radius:999px;
+  padding:2px 7px;
+  margin-top:2px;
+}
+.avatar.think{
+  animation:thinkPulse .45s ease;
+}
+@keyframes thinkPulse{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.12); box-shadow:0 0 18px rgba(255,255,255,.45)}
+  100%{transform:scale(1)}
+}
+
+
+.seat.bottom .playerHelp{
+  margin-top:10px;
+  text-align:center;
+  color:rgba(255,255,255,.95);
+  font-size:13px;
+  font-weight:700;
+  text-shadow:0 2px 4px rgba(0,0,0,.75);
+  width:100%;
+}
+
+
+#passBtn,
+#grabBtn,
+.humanCard{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+#passBtn{
+  min-width:140px;
+  min-height:58px;
+  position:relative;
+  z-index:200;
+}
+#grabBtn{
+  min-width:170px;
+  min-height:52px;
+  position:relative;
+  z-index:200;
+}
+#grabBtn.ready{
+  animation:readyPulse .8s ease-in-out infinite;
+}
+@keyframes readyPulse{
+  0%,100%{transform:scale(1);box-shadow:0 4px 0 #9c7d1d}
+  50%{transform:scale(1.05);box-shadow:0 0 22px rgba(244,211,94,.9),0 4px 0 #9c7d1d}
+}
+.humanCard{
+  position:relative;
+  z-index:150;
+}
+
+</style>
+</head>
+<body>
+
+<div id="setup" class="screen active">
+  <div class="setupCard">
+    <h1>🥄 Spoons Deluxe v12</h1>
+    <h2>New Game</h2>
+    <div>
+      <label>Your Name</label><br><input id="playerName" value="Wolf"><br><label>Total Players</label><br>
+      <select id="playerCount">
+        <option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option>
+      </select>
+    </div>
+    <div>
+      <label>AI Players</label><br>
+      <select id="aiCount">
+        <option>1</option><option>2</option><option selected>4</option><option>5</option><option>6</option><option>7</option>
+      </select>
+    </div>
+    <div>
+      <label>AI Difficulty</label><br>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+        <option value="expert">Expert</option>
+      </select>
+    </div>
+    <button onclick="startGame()">Start Game</button>
+    <p class="small">AI personalities: Hawk reacts fast, Shark plays smart, Collector builds sets, Panicker makes mistakes, Flash is quick.</p>
+  </div>
+</div>
+
+<div id="game" class="screen">
+  <div class="gameWrap">
+    <div class="topHud">
+      <div class="hudPill"><b>🥄 Spoons Deluxe</b></div>
+      <div class="hudPill" id="roundHud">Build four of a kind.</div>
+      <div class="hudPill"><button onclick="returnToSetup()">New Game</button></div>
+    </div>
+
+    <div id="table">
+      <div class="statusFloat" id="status">Build four of a kind.</div>
+      <div id="spoonRack" class="centerSpoons"></div>
+      <div class="deckPile">
+        <div class="cardBack"></div><div class="cardBack"></div><div class="cardBack"></div>
+      </div>
+      <div id="seats"></div>
+    </div>
+
+    <div class="statsPanel">
+      <h3>Reaction Stats</h3>
+      <div id="stats">No spoon taken yet.</div><div id="revealArea"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SPOONS_WORD = "SPOONS";
+const suits = ["♠","♥","♦","♣"];
+const ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+function getSeatClasses(total){
+  if(total <= 3) return ["bottom","left","right"];
+  if(total === 4) return ["bottom","left","top","right"];
+  if(total === 5) return ["bottom","left","top","right","topLeft"];
+  if(total === 6) return ["bottom","left","top","right","topLeft","topRight"];
+  if(total === 7) return ["bottom","left","top","right","topLeft","topRight","bottomLeft"];
+  return ["bottom","left","top","right","topLeft","topRight","bottomLeft","bottomRight"];
+}
+const icons = ["🐺"];
+const iconMap = {
+  Wolf:"🐺",
+  Hawk:"🦅",
+  Shark:"🦈",
+  Ace:"♠️",
+  Bluff:"🎭",
+  Lucky:"🍀",
+  Flash:"⚡",
+  Dealer:"🎩"
+};
+const aiProfiles = {
+  Hawk:{label:"Hawk", cardDelay:.95, strategy:.75, firstMin:80, firstMax:260, reactMin:450, reactMax:900},
+  Shark:{label:"Shark", cardDelay:.72, strategy:.96, firstMin:120, firstMax:360, reactMin:520, reactMax:980},
+  Ace:{label:"Collector", cardDelay:.62, strategy:.98, firstMin:520, firstMax:1100, reactMin:900, reactMax:1750},
+  Bluff:{label:"Panicker", cardDelay:1.18, strategy:.45, firstMin:500, firstMax:1400, reactMin:650, reactMax:2100},
+  Lucky:{label:"Lucky", cardDelay:1.0, strategy:.60, firstMin:250, firstMax:950, reactMin:620, reactMax:1450},
+  Flash:{label:"Flash", cardDelay:.82, strategy:.55, firstMin:80, firstMax:220, reactMin:380, reactMax:760},
+  Dealer:{label:"Dealer", cardDelay:.9, strategy:.80, firstMin:300, firstMax:700, reactMin:720, reactMax:1350}
+};
+
+let players = [];
+let deck = [];
+let humanHand = [];
+let roundActive = false;
+let spoonTaken = false;
+let spoonsLeft = 0;
+let spoonStart = 0;
+let reactionStats = [];
+let timers = [];
+let loops = [];
+let difficulty = "medium";
+let incomingStart = 0;
+let awaitingDecision = false;
+let incomingDuration = 7000;
+let meterLoop = null;
+let lastSeatRender = 0;
+
+function makeDeck(){
+  deck = [];
+  for(const s of suits){
+    for(const r of ranks){
+      deck.push({rank:r,suit:s,color:(s==="♥"||s==="♦")?"red":"black"});
+    }
+  }
+  deck.sort(()=>Math.random()-.5);
+}
+function drawFromDeck(){
+  if(deck.length === 0) makeDeck();
+  return deck.pop();
+}
+function startGame(){
+  const total = parseInt(document.getElementById("playerCount").value);
+  let ai = parseInt(document.getElementById("aiCount").value);
+  if(ai >= total) ai = total - 1;
+  difficulty = document.getElementById("difficulty").value;
+
+  players = [{name:(document.getElementById("playerName")?.value || "Wolf"),ai:false,letters:"",hasSpoon:false,eliminated:false,hand:[],incoming:null,icon:iconMap.Wolf}];
+  for(let i=1;i<=ai;i++){
+    const aiNames=["Hawk","Shark","Ace","Bluff","Lucky","Flash","Dealer"];
+    const aiName = aiNames[(i-1)%aiNames.length];
+    players.push({name:aiName,profile:aiProfiles[aiName],ai:true,letters:"",hasSpoon:false,eliminated:false,hand:[],incoming:null,icon:iconMap[aiName]});
+  }
+  while(players.length < total){
+    players.push({name:"Player " + players.length,ai:false,letters:"",hasSpoon:false,eliminated:false,hand:[],incoming:null,icon:icons[players.length%icons.length]});
+  }
+
+  document.getElementById("setup").classList.remove("active");
+  document.getElementById("game").classList.add("active");
+  startRound();
+}
+function returnToSetup(){
+  clearEverything();
+  document.getElementById("setup").classList.add("active");
+  document.getElementById("game").classList.remove("active");
+}
+function activePlayers(){ return players.filter(p=>!p.eliminated); }
+function nextActiveIndex(index){
+  let i = index;
+  do{ i = (i + 1) % players.length; }while(players[i].eliminated);
+  return i;
+}
+function prevActiveIndex(index){
+  let i = index;
+  do{ i = (i - 1 + players.length) % players.length; }while(players[i].eliminated);
+  return i;
+}
+function startRound(){
+  clearEverything();
+  makeDeck();
+
+  for(const p of players){
+    p.hasSpoon = false;
+    p.hand = [];
+    p.incoming = null;
+  }
+
+  for(const p of activePlayers()){
+    for(let i=0;i<4;i++) p.hand.push(drawFromDeck());
+    p.incoming = drawFromDeck();
+  }
+  humanHand = players[0].hand;
+
+  reactionStats = [];
+  spoonTaken = false;
+  roundActive = true;
+  spoonsLeft = activePlayers().length - 1;
+  resetHumanDeadline(true);
+
+  renderAll();
+  updateStatus("Build four of a kind.");
+  document.getElementById("roundHud").textContent = "Build four of a kind.";
+  document.getElementById("stats").innerHTML = "No spoon taken yet.";
+
+  startAICardLoops();
+  startMeterLoop();
+}
+function renderAll(){
+  renderSpoons();
+  renderSeats();
+}
+function renderSpoons(){
+  const rack = document.getElementById("spoonRack");
+  rack.innerHTML = "";
+  for(let i=0;i<spoonsLeft;i++){
+    const span = document.createElement("span");
+    span.className = "spoon";
+    span.textContent = "🥄";
+    rack.appendChild(span);
+  }
+}
+function removeOneSpoonAnimated(){
+  const rack = document.getElementById("spoonRack");
+  const spoon = rack.querySelector(".spoon");
+  if(!spoon){ renderSpoons(); return; }
+  spoon.classList.add("gone");
+  setTimeout(()=>renderSpoons(),290);
+}
+function renderSeats(){
+  const seats = document.getElementById("seats");
+  seats.innerHTML = players.map((p,idx)=>seatHTML(p,idx)).join("");
+}
+
+function throttledRenderSeats(){
+  const now = Date.now();
+  if(now - lastSeatRender > 750){
+    lastSeatRender = now;
+    renderSeats();
+  }
+}
+
+function seatHTML(p,idx){
+  const cls = (getSeatClasses(players.length)[idx] || "top");
+  const letters = SPOONS_WORD.split("").map((ch,i)=>
+    `<span class="letter">${p.letters[i] ? p.letters[i] : "_"}</span>`
+  ).join("");
+
+  let cards = "";
+  if(idx === 0){
+    const hotRank = bestRankForHuman(p);
+    const canStartSpoons = hasFourOfAKind(p.hand);
+    const canGrab = roundActive && (spoonTaken || canStartSpoons) && !p.hasSpoon && spoonsLeft > 0;
+    const incoming = p.incoming ? `<div class="incomingSlot"><span class="card ${p.incoming.color}">${p.incoming.rank}${p.incoming.suit}</span></div>` : `<div class="incomingSlot"></div>`;
+    const hand = p.hand.map((c,i)=>`<span class="card humanCard ${c.color} ${c.rank === hotRank ? "hot" : ""}" data-card-index="${i}" tabindex="0">${c.rank}${c.suit}</span>`).join("");
+    cards = `<div class="handRow">${hand}<div class="incomingColumn">${incoming}<button id="passBtn" type="button">Pass</button></div></div>
+      <div class="playerControls">
+        <div class="meter"><div class="meterFill" id="passMeter"></div></div>
+        <button id="grabBtn" class="${canGrab ? "ready" : ""}" type="button">🥄 Grab Spoon</button>
+      </div>
+      <div class="small playerHelp">${humanNudge(p)}</div>`;
+  }else{
+    cards = `<div class="handRow fan">
+      <div class="incomingSlot"></div>
+      <div class="cardBack"></div><div class="cardBack"></div><div class="cardBack"></div><div class="cardBack"></div>
+    </div>`;
+  }
+
+  return `<div class="seat ${cls} ${p.eliminated?'out':''}">
+    <div class="nameTag">${p.name}</div>
+    <div class="avatar">${p.icon}</div>
+    ${p.ai && p.profile ? `<div class="personalityTag">${p.profile.label}</div>` : ""}
+    <div class="letters">${p.eliminated ? "OUT" : letters}${p.hasSpoon ? '<span class="spoonBadge">🥄</span>' : ""}</div>
+    ${cards}
+  </div>`;
+}
+
+function bestRankForHuman(p){
+  const counts = {};
+  for(const c of p.hand || []) counts[c.rank] = (counts[c.rank] || 0) + 1;
+  let bestRank = "";
+  let bestCount = 0;
+  for(const [rank,count] of Object.entries(counts)){
+    if(count > bestCount){
+      bestRank = rank;
+      bestCount = count;
+    }
+  }
+  return bestCount >= 2 ? bestRank : "";
+}
+
+function humanNudge(p){
+  if(!roundActive) return "Round over.";
+  if(spoonTaken && !p.hasSpoon && spoonsLeft > 0) return "Spoons are moving.";
+  if(hasFourOfAKind(p.hand)) return "Four of a kind. Take a spoon.";
+  const rank = bestRankForHuman(p);
+  if(rank) return `Best set: ${rank}s.`;
+  return "Build four of a kind.";
+}
+function animatePass(fromIndex,toIndex){
+  const table = document.getElementById("table");
+  if(!table) return;
+  const fromSeat = document.querySelectorAll(".seat")[fromIndex];
+  const toSeat = document.querySelectorAll(".seat")[toIndex];
+  if(!fromSeat || !toSeat) return;
+  const tr = table.getBoundingClientRect();
+  const fr = fromSeat.getBoundingClientRect();
+  const tor = toSeat.getBoundingClientRect();
+  const mover = document.createElement("div");
+  mover.className = "cardMover";
+  const fromX = (fr.left + fr.width/2 - tr.left - 27) + "px";
+  const fromY = (fr.top + fr.height/2 - tr.top - 38) + "px";
+  const toX = (tor.left + tor.width/2 - tr.left - 27) + "px";
+  const toY = (tor.top + tor.height/2 - tr.top - 38) + "px";
+  mover.style.setProperty("--fromX", fromX);
+  mover.style.setProperty("--fromY", fromY);
+  mover.style.setProperty("--toX", toX);
+  mover.style.setProperty("--toY", toY);
+  table.appendChild(mover);
+  setTimeout(()=>mover.remove(),500);
+}
+function passCardToNext(fromIndex, card){
+  const toIndex = nextActiveIndex(fromIndex);
+  animatePass(fromIndex,toIndex);
+  if(players[toIndex].incoming){
+    deck.unshift(card);
+  }else{
+    players[toIndex].incoming = card;
+    if(toIndex === 0) resetHumanDeadline();
+  }
+}
+function passHumanIncoming(){
+  if(!roundActive || spoonTaken || !players[0].incoming) return;
+  const outgoing = players[0].incoming;
+  players[0].incoming = null;
+  passCardToNext(0, outgoing);
+  if(!players[0].incoming) players[0].incoming = drawFromDeck();
+  resetHumanDeadline(true);
+  renderSeats();
+}
+function swapHumanIncoming(index){
+  if(!roundActive || spoonTaken || !players[0].incoming) return;
+  const kept = players[0].incoming;
+  const outgoing = humanHand[index];
+  humanHand[index] = kept;
+  players[0].incoming = null;
+  passCardToNext(0, outgoing);
+  if(!players[0].incoming) players[0].incoming = drawFromDeck();
+  resetHumanDeadline(true);
+  renderSeats();
+}
+function resetHumanDeadline(force=false){
+  if(force || !awaitingDecision){
+    incomingStart = Date.now();
+    awaitingDecision = true;
+  }
+}
+function autoPassIfNeeded(){
+  if(!roundActive || spoonTaken || !players[0].incoming) return;
+  const elapsed = Date.now() - incomingStart;
+  if(elapsed >= incomingDuration) passHumanIncoming();
+}
+function startMeterLoop(){
+  if(meterLoop) clearInterval(meterLoop);
+  meterLoop = setInterval(()=>{
+    const meter = document.getElementById("passMeter");
+    if(!meter) return;
+
+    if(!roundActive || spoonTaken){
+      meter.style.width = "0%";
+      return;
+    }
+
+    const elapsed = Math.max(0, Date.now() - incomingStart);
+    const percent = Math.min(100, (elapsed / incomingDuration) * 100);
+    meter.style.width = percent + "%";
+
+    if(percent >= 100 && players[0].incoming){
+      awaitingDecision = false;
+      passHumanIncoming();
+    }
+  },50);
+}
+function hasFourOfAKind(hand){
+  const counts = {};
+  for(const c of hand) counts[c.rank] = (counts[c.rank] || 0) + 1;
+  return Object.values(counts).some(v=>v>=4);
+}
+function biggestSet(hand){
+  const counts = {};
+  for(const c of hand) counts[c.rank] = (counts[c.rank] || 0) + 1;
+  return Math.max(...Object.values(counts),0);
+}
+function startAICardLoops(){
+  players.forEach((p,idx)=>{
+    if(p.ai && !p.eliminated){
+      const id = setInterval(()=>aiCardDecision(p,idx), getAICardDelay(p));
+      loops.push(id);
+    }
+  });
+}
+function aiCardDecision(p,idx){
+  if(!roundActive || spoonTaken || p.eliminated || p.hasSpoon) return;
+  if(!p.incoming) p.incoming = drawFromDeck();
+
+  const card = p.incoming;
+  p.incoming = null;
+
+  let bestIndex = -1;
+  let bestScore = scoreHand(p.hand);
+  const strategy = p.profile?.strategy ?? .75;
+
+  for(let i=0;i<p.hand.length;i++){
+    const test = p.hand.slice();
+    test[i] = card;
+    const score = scoreHand(test);
+    if(score > bestScore){
+      bestScore = score;
+      bestIndex = i;
+    }
+  }
+
+  // Personality behavior:
+  // Shark/Collector almost always make the best card decision.
+  // Panicker/Lucky sometimes make a sloppy or random decision.
+  if(bestIndex >= 0 && Math.random() > strategy){
+    bestIndex = Math.random() < .5 ? -1 : Math.floor(Math.random()*p.hand.length);
+  }
+
+  flashPlayer(p.name, "think");
+
+  if(bestIndex >= 0){
+    const outgoing = p.hand[bestIndex];
+    p.hand[bestIndex] = card;
+    passCardToNext(idx, outgoing);
+  }else{
+    passCardToNext(idx, card);
+  }
+
+  if(hasFourOfAKind(p.hand) && !spoonTaken){
+    const delay = getAIFirstSpoonDelay(p);
+    timers.push(setTimeout(()=>{
+      if(roundActive && !spoonTaken && hasFourOfAKind(p.hand)) firstSpoonTaken(p);
+    }, delay));
+  }
+
+  // No full redraw here. Keeps human controls responsive during AI turns.
+}
+function scoreHand(hand){
+  const counts = {};
+  for(const c of hand) counts[c.rank] = (counts[c.rank] || 0) + 1;
+  const vals = Object.values(counts).sort((a,b)=>b-a);
+  return vals[0]*10 + (vals[1] || 0);
+}
+function getAICardDelay(p){
+  const base = difficulty==="easy" ? 1500 : difficulty==="medium" ? 900 : difficulty==="hard" ? 600 : 380;
+  return Math.max(260, Math.round(base * (p?.profile?.cardDelay || 1)));
+}
+function getAIFirstSpoonDelay(p){
+  const mult = difficulty==="easy" ? 1.45 : difficulty==="medium" ? 1 : difficulty==="hard" ? .65 : .42;
+  const profile = p?.profile || {firstMin:400, firstMax:900};
+  return (profile.firstMin + Math.random()*(profile.firstMax-profile.firstMin)) * mult;
+}
+function getAIReactionDelay(p){
+  const mult = difficulty==="easy" ? 1.6 : difficulty==="medium" ? 1.15 : difficulty==="hard" ? .9 : .72;
+  const profile = p?.profile || {reactMin:500, reactMax:1200};
+  return (profile.reactMin + Math.random()*(profile.reactMax-profile.reactMin)) * mult;
+}
+function humanGrabSpoon(){
+  if(!roundActive) return;
+  const human = players[0];
+
+  if(!spoonTaken){
+    if(!hasFourOfAKind(humanHand)){
+      updateStatus("You need four of a kind to take the first spoon.");
+      return;
+    }
+    firstSpoonTaken(human);
+    return;
+  }
+
+  if(human.hasSpoon || spoonsLeft <= 0) return;
+  takeReactionSpoon(human, "You");
+}
+function firstSpoonTaken(player){
+  spoonTaken = true;
+  spoonStart = Date.now();
+  player.hasSpoon = true;
+  spoonsLeft--;
+  reactionStats.push({name:player.name,time:"FIRST"}); flashPlayer(player.name); floatingReaction(player.name,"FIRST!");
+  removeOneSpoonAnimated();
+  renderSeats();
+  updateStatus("A spoon is gone.");
+  beginAIReactions();
+}
+function beginAIReactions(){
+  timers.forEach(t=>clearTimeout(t));
+  timers = [];
+  const remainingAI = activePlayers().filter(p=>p.ai && !p.hasSpoon);
+  remainingAI.forEach(p=>{
+    const delay = getAIReactionDelay(p);
+    timers.push(setTimeout(()=>takeReactionSpoon(p,p.name), delay));
+  });
+}
+function takeReactionSpoon(player, label){
+  if(spoonsLeft <= 0 || player.hasSpoon || !roundActive) return;
+  player.hasSpoon = true;
+  const reaction = ((Date.now() - spoonStart)/1000).toFixed(2) + " sec";
+  reactionStats.push({name:label || player.name,time:reaction}); flashPlayer(label||player.name); floatingReaction(label||player.name,reaction);
+  spoonsLeft--;
+  removeOneSpoonAnimated();
+  renderSeats();
+  if(spoonsLeft <= 0) finishRound();
+}
+function finishRound(){
+  roundActive = false;
+  clearEverything(false);
+
+  const losers = activePlayers().filter(p=>!p.hasSpoon);
+  let loser = losers[0];
+
+  if(loser){ markMissed(loser.name);
+    loser.letters += SPOONS_WORD[loser.letters.length];
+    if(loser.letters.length >= SPOONS_WORD.length) loser.eliminated = true;
+  }
+
+  let html = `<table class="statTable"><tr><th>Player</th><th>Reaction</th></tr>`;
+  reactionStats.forEach(s=>html += `<tr><td>${s.name}</td><td>${s.time}</td></tr>`);
+  if(loser) html += `<tr><td>${loser.name}</td><td>MISSED SPOON</td></tr>`;
+  html += `</table>`;
+  html += `<br><button onclick="nextStep()">Next Round</button>`;
+  document.getElementById("stats").innerHTML = html;
+    let reveal="";
+    players.forEach(p=>{
+      const counts={};
+      (p.hand||[]).forEach(c=>counts[c.rank]=(counts[c.rank]||0)+1);
+      const four=Object.values(counts).some(v=>v>=4);
+      if(four) reveal += "<b>"+p.name+"</b> had Four of a Kind<br>";
+    });
+    if(loser) reveal += "<span style='color:#ff8080'><b>"+loser.name+"</b> missed the spoon.</span>";
+    const r=document.getElementById("revealArea");
+    if(r) r.innerHTML="<hr>"+reveal;
+
+  renderSeats();
+
+  const stillIn = activePlayers();
+  if(stillIn.length <= 1){
+    updateStatus(`${stillIn[0].name} wins the game!`);
+    document.getElementById("roundHud").textContent = `${stillIn[0].name} wins.`;
+  }else if(loser){ markMissed(loser.name);
+    updateStatus(`${loser.name} gets a letter.`);
+    document.getElementById("roundHud").textContent = `${loser.name} gets a letter.`;
+  }
+}
+function nextStep(){
+  const stillIn = activePlayers();
+  if(stillIn.length <= 1) returnToSetup();
+  else startRound();
+}
+function updateStatus(msg){
+  document.getElementById("status").textContent = msg;
+}
+
+let inputLockUntil = 0;
+function handleHumanPointer(e){
+  const pass = e.target.closest && e.target.closest("#passBtn");
+  const grab = e.target.closest && e.target.closest("#grabBtn");
+  const card = e.target.closest && e.target.closest(".humanCard");
+
+  if(!pass && !grab && !card) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const now = Date.now();
+  if(now < inputLockUntil) return;
+  inputLockUntil = now + 90;
+
+  if(pass){
+    passHumanIncoming();
+    return;
+  }
+
+  if(grab){
+    humanGrabSpoon();
+    return;
+  }
+
+  if(card){
+    const idx = Number(card.dataset.cardIndex);
+    if(Number.isInteger(idx)) swapHumanIncoming(idx);
+  }
+}
+document.addEventListener("pointerdown", handleHumanPointer, true);
+
+function handleHumanKey(e){
+  if(!document.getElementById("game").classList.contains("active")) return;
+  const tag = e.target && e.target.tagName;
+  if(tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+  if(e.key === " "){
+    e.preventDefault();
+    passHumanIncoming();
+    return;
+  }
+  if(e.key === "Enter"){
+    e.preventDefault();
+    humanGrabSpoon();
+    return;
+  }
+  if(/^[1-4]$/.test(e.key)){
+    e.preventDefault();
+    swapHumanIncoming(Number(e.key) - 1);
+  }
+}
+document.addEventListener("keydown", handleHumanKey);
+
+
+function flashPlayer(name, mode="flash"){
+  document.querySelectorAll('.seat').forEach(seat=>{
+    if(seat.innerText.includes(name)){
+      const a=seat.querySelector('.avatar');
+      if(a){
+        a.classList.add(mode);
+        setTimeout(()=>a.classList.remove(mode), mode==="think" ? 500 : 700);
+      }
+    }
+  });
+}
+function markMissed(name){
+  document.querySelectorAll('.seat').forEach(seat=>{
+    if(seat.innerText.includes(name)){
+      const a=seat.querySelector('.avatar');
+      if(a)a.classList.add('missed');
+    }
+  });
+}
+function floatingReaction(name,text){
+  const div=document.createElement('div');
+  div.className='floatReaction';
+  div.textContent=text;
+  div.style.left=(Math.random()*60+20)+'%';
+  div.style.top=(Math.random()*40+20)+'%';
+  document.body.appendChild(div);
+  setTimeout(()=>div.remove(),2000);
+}
+
+function clearEverything(){
+  timers.forEach(t=>clearTimeout(t));
+  loops.forEach(l=>clearInterval(l));
+  timers = [];
+  loops = [];
+  if(meterLoop){
+    clearInterval(meterLoop);
+    meterLoop = null;
+  }
+}
+</script>
+</body>
+</html>
