@@ -23,6 +23,28 @@
     overflow-x:hidden;
     background:linear-gradient(180deg,var(--purple),#7d83d9 42%,var(--sky));
   }
+  .dashboard-link{
+    position:fixed;
+    top:14px;
+    left:14px;
+    z-index:1000;
+    display:inline-flex;
+    align-items:center;
+    min-height:40px;
+    padding:0 14px;
+    border:1px solid rgba(255,255,255,.32);
+    border-radius:999px;
+    background:rgba(8,36,30,.82);
+    color:white;
+    font-size:14px;
+    font-weight:900;
+    text-decoration:none;
+    box-shadow:0 8px 20px rgba(0,0,0,.22);
+  }
+  .dashboard-link:hover,.dashboard-link:focus-visible{
+    border-color:var(--gold);
+    outline:none;
+  }
   button,select,input{
     font-size:16px;
     border:0;
@@ -580,6 +602,7 @@ to{opacity:0;transform:translateY(-40px)}
 </style>
 </head>
 <body>
+<a class="dashboard-link" href="https://chriswolfesq-collab.github.io/dashboard/" aria-label="Back to Wolf Games dashboard">Wolf Games</a>
 
 <div id="setup" class="screen active">
   <div class="setupCard">
